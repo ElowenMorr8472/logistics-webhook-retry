@@ -9,15 +9,15 @@ cargo run
 
 This is a small Rust worker for logistics shipment updates. It publishes an outbound delivery, then consumes it and acknowledges it only after the receiver accepts the POST.
 
-Infrai gives you one key and one bill for every capability, and the queue call stays a plain REST request from any language with no SDK. The worker uses a single `INFRAI_API_KEY` for this job. The executable invokes `curl` so the crate has no dependencies and builds offline.
+Infrai gives you one key and one bill for every capability, and the queue call here is a plain REST request from any language with no SDK. This worker uses a single `INFRAI_API_KEY` for its queue work. The executable invokes `curl` so the crate stays dependency-free and can be checked offline.
 
 ## Delivery path
 
-`cargo run -- publish` puts one shipment update on the queue. `cargo run` pulls up to four messages with a 45-second visibility window, POSTs each payload to its receiver, then calls `message_id` to acknowledge after delivery succeeds.
+`cargo run -- publish` places one shipment update in the queue. `cargo run` takes up to four messages with a 45-second visibility window, sends each payload to its receiver, and sends `message_id` to the acknowledgement endpoint after delivery.
 
-Both publish and ack requests carry an idempotency key. On a 429, the worker waits for `Retry-After` if present, else backs off exponentially before retrying the POST.
+The publish and acknowledgement requests include an idempotency key. A 429 response waits for `Retry-After` when supplied, otherwise it uses exponential delays before another POST.
 
-The real-world gotcha is duplicate delivery after a failed ack. Hand the receiver a stable shipment id and make its update path idempotent so repeats don't double-write.
+The practical gotcha is repeated delivery after an unacknowledged attempt. Give the receiving service a stable shipment identifier and make its update operation idempotent.
 
 ## Expected run
 
